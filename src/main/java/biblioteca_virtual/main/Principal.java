@@ -4,6 +4,7 @@ import biblioteca_virtual.model.*;
 import biblioteca_virtual.repository.AutorRepository;
 import biblioteca_virtual.service.DataConverter;
 import biblioteca_virtual.service.LibroApiClient;
+import org.springframework.beans.factory.annotation.Autowired;
 
 import java.util.List;
 import java.util.Optional;
@@ -15,7 +16,11 @@ public class Principal {
     Scanner scanner = new Scanner(System.in);
     DataConverter dataConverter = new DataConverter();
     private final String URL_BASE = "http://gutendex.com/books/?search=";
-    private AutorRepository autorRepository;
+    private AutorRepository autorRepositorio;
+
+    public Principal(AutorRepository autorRepository) {
+        this.autorRepositorio = autorRepository;
+    }
 
     public void mostrarMenu(){
         //var opcion = -1;
@@ -86,9 +91,7 @@ public class Principal {
         return libro;
     }
 
-    public DataLibro obtenerDatosLibro(){
-        // System.out.print("Ingresa el libro que quieres registrar: ");
-        // String libroIngresado = scanner.nextLine();
+    public void registrarLibro(){
         String libroIngresado = "Romeo and Juliet";
         var jsonObtenido = libroApiClient.getData(URL_BASE + libroIngresado.toLowerCase().replace(" ", "%20"));
         var dataTotal = dataConverter.getData(jsonObtenido, DataTotal.class);
@@ -98,19 +101,13 @@ public class Principal {
 
         if (libroEncontrado.isPresent()){
             DataLibro dataLibro = libroEncontrado.get();
-            System.out.println(dataLibro);
-            Autor autor = convertirDataAutor(dataLibro.autor().get(0));
-            System.out.println(autor.toString());
-            //Autor autorGuardado = autorRepository.save(autor);
-            Libro libro = convertirDataLibro(dataLibro);
-            System.out.println(libro.toString());
-            return null;
-        }
-        return null;
-    }
 
-    public void registrarLibro(){
-        DataLibro dataLibro = obtenerDatosLibro();
+            Autor autor = convertirDataAutor(dataLibro.autor().get(0));
+            Autor autorGuardado = autorRepositorio.save(autor);
+
+            Libro libro = convertirDataLibro(dataLibro);
+
+        }
     }
 
     public void mostrarLibros(){

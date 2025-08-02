@@ -18,7 +18,7 @@ public class BibliotecaVirtualApplication implements CommandLineRunner {
 
 	@Override
 	public void run(String... args) throws Exception {
-		Principal principal = new Principal();
+		Principal principal = new Principal(autorRepository);
 		principal.mostrarMenu();
 	}
 }
