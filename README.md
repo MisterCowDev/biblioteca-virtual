@@ -39,9 +39,11 @@ El proyecto está organizado en distintas capas y paquetes para mantener una est
 git clone https://github.com/MisterCowDev/biblioteca-virtual.git
 
 3) Crear una base de datos
+   
 CREATE DATABASE db_libros;
 
-4) Configura el archivo application.properties
+5) Configura el archivo application.properties
+   
 src/main/resources/application.properties
 
 spring.datasource.url=jdbc:postgresql://localhost/db_libros
