@@ -98,7 +98,7 @@ public class Principal {
     }
 
     public void registrarLibro(){
-        System.out.println("Ingresa el nombre del libro para registrar: ");
+        System.out.print("Ingresa el nombre del libro para registrar: ");
         String libroIngresado = scanner.nextLine();
         var jsonObtenido = libroApiClient.getData(URL_BASE + libroIngresado.toLowerCase().replace(" ", "%20"));
         var dataTotal = dataConverter.getData(jsonObtenido, DataTotal.class);
@@ -163,8 +163,13 @@ public class Principal {
     }
 
     public void mostrarAutoresPorAnio(){
-        autores = autorRepositorio.buscarAutorVivo(1800);
+        System.out.print("Ingresa el año desde el cual deseas buscar autores que sigan vivos: ");
+        Integer year = scanner.nextInt();
+        autores = autorRepositorio.buscarAutorVivo(year);
         autores.forEach(autor -> System.out.println(autor.getNombre()));
+        if (autores.size() == 0){
+            System.out.println("No autores vivos desde esa fecha");
+        }
     }
 
     public void mostrarLibroPorIdioma(){
