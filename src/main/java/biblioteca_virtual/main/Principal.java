@@ -2,6 +2,7 @@ package biblioteca_virtual.main;
 
 import biblioteca_virtual.model.*;
 import biblioteca_virtual.repository.AutorRepository;
+import biblioteca_virtual.repository.LibroRepository;
 import biblioteca_virtual.service.DataConverter;
 import biblioteca_virtual.service.LibroApiClient;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -9,6 +10,7 @@ import org.springframework.beans.factory.annotation.Autowired;
 import java.util.List;
 import java.util.Optional;
 import java.util.Scanner;
+import java.util.stream.Collectors;
 
 public class Principal {
 
@@ -17,9 +19,13 @@ public class Principal {
     DataConverter dataConverter = new DataConverter();
     private final String URL_BASE = "http://gutendex.com/books/?search=";
     private AutorRepository autorRepositorio;
+    private LibroRepository libroRepositorio;
+    private List<Libro> libros;
+    private List<Autor> autores;
 
-    public Principal(AutorRepository autorRepository) {
+    public Principal(AutorRepository autorRepository, LibroRepository libroRepository) {
         this.autorRepositorio = autorRepository;
+        this.libroRepositorio = libroRepository;
     }
 
     public void mostrarMenu(){
@@ -28,14 +34,14 @@ public class Principal {
         while (opcion != 0){
             var opcionMenu = """
                     
-                    ========================
-                    1 - Buscar libro y registrarlo en la base de datos (Romeo y Julieta por ejemplo)
+                    =================================================
+                    1 - Buscar libro y registrarlo en la base de datos
                     2 - Mostrar libros registrados
                     3 - Mostrar autores registrados
                     4 - Mostrar autores vivos según el año indicado
                     5 - Mostrar libros por idioma
                     0 - Salir
-                    ========================
+                    =================================================
                     
                     """;
             System.out.print(opcionMenu + "Escoge una opción: ");
@@ -92,7 +98,8 @@ public class Principal {
     }
 
     public void registrarLibro(){
-        String libroIngresado = "Romeo and Juliet";
+        System.out.println("Ingresa el nombre del libro para registrar: ");
+        String libroIngresado = scanner.nextLine();
         var jsonObtenido = libroApiClient.getData(URL_BASE + libroIngresado.toLowerCase().replace(" ", "%20"));
         var dataTotal = dataConverter.getData(jsonObtenido, DataTotal.class);
 
@@ -102,27 +109,91 @@ public class Principal {
         if (libroEncontrado.isPresent()){
             DataLibro dataLibro = libroEncontrado.get();
 
-            Autor autor = convertirDataAutor(dataLibro.autor().get(0));
-            Autor autorGuardado = autorRepositorio.save(autor);
+            DataAutor dataAutor = dataLibro.autor().get(0);
+            String nombreAutor = dataAutor.nombre();
+
+            Optional<Autor> autorExiste = autorRepositorio.findByNombre(nombreAutor);
+
+            // Buscar al autor antes de registrarlo, para evitar duplicados
+            Autor autor;
+            if (autorExiste.isPresent()){
+                System.out.println("El autor no se ha registrado porque ya existe en la base de datos");
+                autor = autorExiste.get();
+            } else {
+                autor = convertirDataAutor(dataAutor);
+                autor = autorRepositorio.save(autor);
+            }
+
+            Optional<Libro> libroExistente = libroRepositorio.findByTitulo(dataLibro.titulo());
+            if (libroExistente.isPresent()){
+                System.out.println("Libro ya existe en la base de datos");
+                return;
+            }
 
             Libro libro = convertirDataLibro(dataLibro);
+            libro.setAutor(autor);
+            libroRepositorio.save(libro);
+            System.out.println("Libro registrado con exito");
 
+        } else {
+            System.out.println("No se ha encontrado el libro");
         }
     }
 
     public void mostrarLibros(){
-
+        libros = libroRepositorio.findAllConAutor();
+        libros.forEach(libro -> System.out.println(
+                "\n=========================" +
+                "\nTítulo: " + libro.getTitulo() +
+                        "\nAutor: " + libro.getAutor().getNombre() +
+                        "\nIdioma: " + libro.getIdioma() +
+                        "\nDescargas: " + libro.getDescargas() +
+                        "\n========================="
+        ));
     }
 
     public void mostrarAutores(){
-
+        autores = autorRepositorio.findAll();
+        autores.forEach(autor -> System.out.println(
+                "\n=========================" +
+                "\nNombre: " + autor.getNombre() +
+                "\nFecha de nacimiento: " + autor.getFechaNacimiento() +
+                "\nFecha de fallecimiento: " + autor.getFechaFallecimiento() +
+                        "\n========================="));
     }
 
     public void mostrarAutoresPorAnio(){
-
+        autores = autorRepositorio.buscarAutorVivo(1800);
+        autores.forEach(autor -> System.out.println(autor.getNombre()));
     }
 
     public void mostrarLibroPorIdioma(){
-
+        System.out.println("""
+                Seleciona el idioma que buscas
+                1 - Español
+                2 - Ingles
+                3 - Frances:
+                """);
+        System.out.print("Opción: ");
+        Integer number = scanner.nextInt();
+        switch (number){
+            case 1:
+                libros = libroRepositorio.buscarPorIdioma("es");
+                break;
+            case 2:
+                libros = libroRepositorio.buscarPorIdioma("en");
+                break;
+            case 3:
+                libros = libroRepositorio.buscarPorIdioma("fr");
+                break;
+            default:
+                System.out.println("Opción no valida");
+                break;
+        }
+        if (!libros.isEmpty()){
+            libros.forEach(libro -> System.out.println(libro.toString()));
+        } else {
+            System.out.println("No hay libros con ese idioma");
+        }
     }
 }
