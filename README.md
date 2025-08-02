@@ -47,10 +47,11 @@ CREATE DATABASE db_libros;
 src/main/resources/application.properties
 
 spring.datasource.url=jdbc:postgresql://localhost/db_libros
-spring.datasource.username=TU_USUARIO
-spring.datasource.password=TU_CONTRASEÑA
-spring.jpa.hibernate.ddl-auto=update
-spring.jpa.show-sql=true
 
-   git clone https://github.com/tu-usuario/tu-repo.git
-   cd tu-repo
+spring.datasource.username=TU_USUARIO
+
+spring.datasource.password=TU_CONTRASEÑA
+
+spring.jpa.hibernate.ddl-auto=update
+
+spring.jpa.show-sql=true
